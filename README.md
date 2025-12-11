@@ -16,6 +16,13 @@ Deze korte gids legt uit hoe je de nieuwste code uit GitHub via **GitHub Desktop
 
 > Tip: Na het overschakelen en pullen kun je in **History** controleren of de online wijziging zichtbaar is. Wil je terug naar je oude branch, open opnieuw de branch-dropdown en kies je vorige branch; je gestashte werk wordt dan teruggezet.
 
+## Wat nu doen als je een branch met mijn aanpassing ziet
+1. **Klik op de branch** die je ziet in de blauwe balk of in de branch-dropdown (zoals `gavinblinksparks-blip`).
+2. Kies **Fetch origin** en daarna **Pull**. De commit met de aanpassing wordt nu opgehaald.
+3. Open het project in Xcode en draai een build (**⌘B**) of run (**⌘R**) om te checken of alles werkt.
+4. Wil je hierna terug naar je eigen branch (bijv. `main` of `work`)? Open weer de branch-dropdown, kies je branch en klik opnieuw op **Fetch** → **Pull** zodat je lokale map netjes gelijk blijft.
+5. Klaar met testen en wil je samenvoegen? Start een Pull Request vanaf de branch met de aanpassing of kies **Branch > Merge into Current Branch** in GitHub Desktop.
+
 ## Project openen in Xcode
 1. Open de lokale projectmap in Finder.
 2. Dubbelklik op `Wordbattle App.xcodeproj` (of kies **File > Open...** in Xcode en navigeer naar dit bestand).
