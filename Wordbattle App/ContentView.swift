@@ -121,6 +121,7 @@ private struct ListDetailView: View {
                 .animation(.default, value: store.lists)
             }
             .navigationTitle(listName)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
@@ -129,8 +130,8 @@ private struct ListDetailView: View {
                         Image(systemName: "plus.circle.fill")
                     }
                 }
-                ToolbarItem(placement: .navigationBarLeading) {
-                    HStack(spacing: 10) {
+                ToolbarItem(placement: .principal) {
+                    HStack(spacing: 12) {
                         Button {
                             showFavorites = true
                         } label: {
@@ -156,7 +157,8 @@ private struct ListDetailView: View {
                         Text(listName)
                             .font(.system(size: 18, weight: .semibold))
                             .foregroundStyle(Theme.textPrimary)
-                            .padding(.leading, 8)
+                            .lineLimit(1)
+                            .padding(.leading, 4)
                     }
                 }
                 ToolbarItemGroup(placement: .bottomBar) {
