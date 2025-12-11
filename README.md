@@ -28,6 +28,12 @@ Deze korte gids legt uit hoe je de nieuwste code uit GitHub via **GitHub Desktop
 4. Wil je hierna terug naar je eigen branch (bijv. `main` of `work`)? Open weer de branch-dropdown, kies je branch en klik opnieuw op **Fetch** → **Pull** zodat je lokale map netjes gelijk blijft.
 5. Klaar met testen en wil je samenvoegen? Start een Pull Request vanaf de branch met de aanpassing of kies **Branch > Merge into Current Branch** in GitHub Desktop.
 
+### Zie je de nieuwe branch niet in Xcode?
+1. **Zorg dat de branch lokaal bestaat.** In GitHub Desktop, klik op de branch-dropdown linksboven → **Choose a branch to merge into…** of **Select branch...** en kijk onder **Remote branches**. Kies de branch met de aanpassing en klik **Checkout**; GitHub Desktop maakt dan een lokale branch van de remote.
+2. **Open (of heropen) het project in Xcode.** Xcode leest de actieve branch van de lokale Git-checkout. Als je Xcode al open had, kies **Source Control > Refresh Status** of sluit en open het project opnieuw.
+3. **Check de branch in Xcode.** Links bovenin hoort nu de branchnaam te staan. Staat er nog `main` terwijl GitHub Desktop op de nieuwe branch staat? Sluit Xcode, controleer in GitHub Desktop dat je daadwerkelijk bent geswitcht (blauwe balk met branchnaam), en open het project opnieuw.
+4. **Build daarna normaal** met **⌘B** of **⌘R**.
+
 ## Project openen in Xcode
 1. Open de lokale projectmap in Finder.
 2. Dubbelklik op `Wordbattle App.xcodeproj` (of kies **File > Open...** in Xcode en navigeer naar dit bestand).
