@@ -9,6 +9,13 @@ Deze korte gids legt uit hoe je de nieuwste code uit GitHub via **GitHub Desktop
 4. Klik daarna rechtsboven op **Fetch origin**. Verschijnt er een blauwe **Pull**-knop, klik daarop om de nieuwe commit binnen te halen.
 5. In het tabblad **History** zie je de nieuwste commit. De lokale map bevat nu dezelfde code als op GitHub.com, inclusief de branch die je hebt gekozen.
 
+### Wat als GitHub Desktop om je lokale wijzigingen vraagt?
+- Krijg je een pop-up met opties zoals op de screenshot ("Leave my changes on main" / "Bring my changes…")? Kies **Leave my changes on main** als je de wijziging van GitHub.com wilt testen zonder jouw eigen lokale werk mee te verplaatsen. GitHub Desktop stash je werk dan op de huidige branch zodat je veilig kunt overschakelen.
+- Heb je kleine lokale tweaks die je mee wilt nemen naar de nieuwe branch? Kies **Bring my changes…** zodat GitHub Desktop ze meeverhuist.
+- Weet je het niet zeker? Kies **Cancel**, commit of stash je eigen werk, en probeer daarna opnieuw te switchen.
+
+> Tip: Na het overschakelen en pullen kun je in **History** controleren of de online wijziging zichtbaar is. Wil je terug naar je oude branch, open opnieuw de branch-dropdown en kies je vorige branch; je gestashte werk wordt dan teruggezet.
+
 ## Project openen in Xcode
 1. Open de lokale projectmap in Finder.
 2. Dubbelklik op `Wordbattle App.xcodeproj` (of kies **File > Open...** in Xcode en navigeer naar dit bestand).
