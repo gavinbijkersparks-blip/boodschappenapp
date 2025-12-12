@@ -74,7 +74,11 @@ struct MealsManagerSheet: View {
                             }
                             .contentShape(Rectangle())
                             .onTapGesture {
+<<<<<<< HEAD
                                 prepareEditState(for: meal)
+=======
+                                primeEditingState(with: meal)
+>>>>>>> codex/improve-visibility-of-suggestion-button-7i8os1
                             }
                         }
                         .onDelete { offsets in
@@ -149,6 +153,7 @@ struct MealsManagerSheet: View {
                             .disabled(editMealName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || editItems.isEmpty)
                         }
                     }
+                    .onAppear { primeEditingState(with: meal) }
                 }
             }
         }
@@ -172,12 +177,20 @@ struct MealsManagerSheet: View {
         editNewItemCategory = categoryList.first ?? "Overig"
     }
 
+<<<<<<< HEAD
     private func prepareEditState(for meal: MealTemplate) {
+=======
+    private func primeEditingState(with meal: MealTemplate) {
+        editingMeal = meal
+>>>>>>> codex/improve-visibility-of-suggestion-button-7i8os1
         editMealName = meal.name
         editItems = meal.items
         editNewItemName = ""
         editNewItemCategory = categoryList.first ?? "Overig"
+<<<<<<< HEAD
         editingMeal = meal
+=======
+>>>>>>> codex/improve-visibility-of-suggestion-button-7i8os1
     }
 }
 
