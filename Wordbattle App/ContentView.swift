@@ -318,24 +318,29 @@ private struct ListDetailView: View {
     @ViewBuilder
     private var listContent: some View {
         VStack(alignment: .leading, spacing: 20) {
-            Text("Alle producten")
-                .font(.system(size: 28, weight: .bold))
-                .foregroundStyle(Theme.textPrimary)
-                .padding(.horizontal)
-                .overlay(alignment: .trailing) {
-                    Button {
-                        showUnplannedSuggestions = true
-                    } label: {
-                        Image(systemName: "sparkles")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(width: 36, height: 36)
-                            .background(Theme.accent)
-                            .clipShape(Circle())
-                            .shadow(color: Theme.shadow, radius: 6, x: 0, y: 3)
-                    }
-                    .padding(.trailing, 16)
+            HStack(alignment: .center, spacing: 12) {
+                Text("Alle producten")
+                    .font(.system(size: 28, weight: .bold))
+                    .foregroundStyle(Theme.textPrimary)
+
+                Spacer()
+
+                Button {
+                    showUnplannedSuggestions = true
+                } label: {
+                    Label("Suggesties", systemImage: "sparkles")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 14)
+                        .background(
+                            LinearGradient(colors: [Theme.accent, Theme.accentSecondary], startPoint: .leading, endPoint: .trailing)
+                        )
+                        .clipShape(Capsule())
+                        .shadow(color: Theme.shadow.opacity(0.4), radius: 8, x: 0, y: 4)
                 }
+            }
+            .padding(.horizontal)
 
             Toggle("Verberg afgevinkt", isOn: $hideDone)
                 .padding(.horizontal)
