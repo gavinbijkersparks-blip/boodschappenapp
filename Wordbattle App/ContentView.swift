@@ -306,10 +306,12 @@ private struct ListDetailView: View {
                         showUnplannedSuggestions = true
                     } label: {
                         Image(systemName: "sparkles")
-                            .foregroundColor(Theme.accent)
-                            .padding(8)
-                            .background(Theme.accent.opacity(0.12))
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(width: 36, height: 36)
+                            .background(Theme.accent)
                             .clipShape(Circle())
+                            .shadow(color: Theme.shadow, radius: 6, x: 0, y: 3)
                     }
                     .padding(.trailing, 16)
                 }
@@ -900,12 +902,28 @@ private struct DayDropCard: View {
                 Button {
                     onShowSuggestions()
                 } label: {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(Theme.accent)
-                        .padding(6)
-                        .background(Theme.accent.opacity(0.12))
-                        .clipShape(Circle())
+                    HStack(spacing: 6) {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 16, weight: .semibold))
+                        Text("Suggesties")
+                            .font(.system(size: 14, weight: .semibold))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 12)
+                    .background(
+                        LinearGradient(
+                            colors: [Theme.accent, Theme.accentSecondary],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .clipShape(Capsule())
+                    .shadow(color: Theme.shadow.opacity(0.4), radius: 8, x: 0, y: 4)
+                    .overlay(
+                        Capsule()
+                            .stroke(Color.white.opacity(0.35), lineWidth: 1)
+                    )
                 }
                 .buttonStyle(.plain)
             }

@@ -74,11 +74,7 @@ struct MealsManagerSheet: View {
                             }
                             .contentShape(Rectangle())
                             .onTapGesture {
-                                editingMeal = meal
-                                editMealName = meal.name
-                                editItems = meal.items
-                                editNewItemName = ""
-                                editNewItemCategory = categoryList.first ?? "Overig"
+                                primeEditingState(with: meal)
                             }
                         }
                         .onDelete { offsets in
@@ -153,6 +149,7 @@ struct MealsManagerSheet: View {
                             .disabled(editMealName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || editItems.isEmpty)
                         }
                     }
+                    .onAppear { primeEditingState(with: meal) }
                 }
             }
         }
@@ -172,6 +169,14 @@ struct MealsManagerSheet: View {
         let category = editNewItemCategory.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return }
         editItems.append(MealItem(name: name, category: canonicalCategory(category.isEmpty ? "Onbekend" : category)))
+        editNewItemName = ""
+        editNewItemCategory = categoryList.first ?? "Overig"
+    }
+
+    private func primeEditingState(with meal: MealTemplate) {
+        editingMeal = meal
+        editMealName = meal.name
+        editItems = meal.items
         editNewItemName = ""
         editNewItemCategory = categoryList.first ?? "Overig"
     }
