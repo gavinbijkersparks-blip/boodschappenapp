@@ -29,6 +29,40 @@ enum AISuggestionsService {
         "prank"
     ]
 
+    private static let nonFoodKeywords: [String] = [
+        "batterij",
+        "batterijen",
+        "schoonmaak",
+        "wasmiddel",
+        "zeep",
+        "shampoo",
+        "afwas",
+        "poets",
+        "wax",
+        "kaars",
+        "kaarsen",
+        "zakdoek",
+        "zakdoeken",
+        "servet",
+        "servetten",
+        "papier",
+        "folies",
+        "folie"
+    ]
+
+    private static let lowRecipeValueKeywords: [String] = [
+        "snoep",
+        "candy",
+        "chocolade",
+        "koek",
+        "koekje",
+        "koekjes",
+        "snack",
+        "chips",
+        "repen",
+        "reep"
+    ]
+
     struct RequestBody: Codable {
         let ingredients: [String]
         let day: String
@@ -47,8 +81,9 @@ enum AISuggestionsService {
     }
 
     static func fetchSuggestions(ingredients: [String], dayTitle: String) async throws -> [RecipeSuggestion] {
+        let relevantIngredients = prioritizedRelevantIngredients(from: ingredients)
         guard !endpoint.isEmpty, let url = URL(string: endpoint) else {
-            return mockSuggestions(ingredients: ingredients, dayTitle: dayTitle)
+            return mockSuggestions(ingredients: relevantIngredients, dayTitle: dayTitle)
         }
 
         var request = URLRequest(url: url)
@@ -58,7 +93,7 @@ enum AISuggestionsService {
             request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         }
 
-        let body = RequestBody(ingredients: ingredients, day: dayTitle, language: "nl")
+        let body = RequestBody(ingredients: relevantIngredients, day: dayTitle, language: "nl")
         request.httpBody = try JSONEncoder().encode(body)
 
         let (data, response) = try await URLSession.shared.data(for: request)
@@ -67,7 +102,7 @@ enum AISuggestionsService {
         }
         if let decoded = try? JSONDecoder().decode(ResponseBody.self, from: data) {
             let filtered = decoded.suggestions
-                .filter { isAcceptable($0, ingredients: ingredients) }
+                .filter { isAcceptable($0, ingredients: relevantIngredients) }
                 .map { raw in
                     RecipeSuggestion(
                         id: UUID(uuidString: raw.id) ?? UUID(),
@@ -78,7 +113,7 @@ enum AISuggestionsService {
                 }
             return filtered
         }
-        return mockSuggestions(ingredients: ingredients, dayTitle: dayTitle)
+        return mockSuggestions(ingredients: relevantIngredients, dayTitle: dayTitle)
     }
 
     private static func isAcceptable(_ suggestion: RawSuggestion, ingredients: [String]) -> Bool {
@@ -96,6 +131,26 @@ enum AISuggestionsService {
         let usedCount = cleanedIngredients.filter { haystack.contains($0) }.count
         let ingredientCoverage = Double(usedCount) / Double(cleanedIngredients.count)
         return ingredientCoverage >= 0.4 // eist dat minstens ~40% van de gekozen producten terugkomen
+    }
+
+    /// Filtert alleen bruikbare ingrediënten voor recepten, zodat snoep of niet-eetbare items de score niet verlagen.
+    private static func prioritizedRelevantIngredients(from ingredients: [String]) -> [String] {
+        let normalized = ingredients
+            .map { $0.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current) }
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+            .filter { !$0.isEmpty }
+
+        let withoutNonFood = normalized.filter { ingredient in
+            !nonFoodKeywords.contains(where: { ingredient.contains($0) })
+        }
+
+        let withoutTreats = withoutNonFood.filter { ingredient in
+            !lowRecipeValueKeywords.contains(where: { ingredient.contains($0) })
+        }
+
+        if !withoutTreats.isEmpty { return withoutTreats }
+        if !withoutNonFood.isEmpty { return withoutNonFood }
+        return normalized
     }
 
     private static func mockSuggestions(ingredients: [String], dayTitle: String) -> [RecipeSuggestion] {
