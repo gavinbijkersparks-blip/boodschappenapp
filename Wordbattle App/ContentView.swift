@@ -490,7 +490,6 @@ private struct AddProductSheet: View {
     @State private var isFavorite: Bool = false
     @State private var day: DayOfWeek? = nil
     @State private var quantity: Int = 1
-    @State private var useAICategory = true
     @State private var isSaving = false
 
     var onSave: (String, String, Bool, DayOfWeek?, Int, Double?) -> Void
@@ -536,7 +535,6 @@ private struct AddProductSheet: View {
                             Text(day.title).tag(DayOfWeek?.some(day))
                         }
                     }
-                    Toggle("Gebruik AI categorie bij opslaan", isOn: $useAICategory)
                 }
             }
             .navigationTitle("Nieuw product")
@@ -551,7 +549,7 @@ private struct AddProductSheet: View {
                             let heuristic = guessedCategory(for: name)
                             var finalCategory = category
                             var resolvedPrice: Double? = nil
-                            if useAICategory, let ai = await AICategoryService.suggestCategory(for: name) {
+                            if let ai = await AICategoryService.suggestCategory(for: name) {
                                 finalCategory = ai
                             }
                             if let heuristic {
