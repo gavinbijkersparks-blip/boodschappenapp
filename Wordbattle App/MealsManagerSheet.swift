@@ -7,15 +7,10 @@ struct MealsManagerSheet: View {
     @State private var mealName: String = ""
     @State private var items: [MealItem] = []
     @State private var newItemName: String = ""
-    @State private var newItemCategory: String = categoryList.first ?? "Overig"
     @State private var editingMeal: MealTemplate?
     @State private var editMealName: String = ""
     @State private var editItems: [MealItem] = []
     @State private var editNewItemName: String = ""
-    @State private var editNewItemCategory: String = categoryList.first ?? "Overig"
-    @State private var editingItem: MealItem?
-    @State private var editItemName: String = ""
-    @State private var editItemCategory: String = categoryList.first ?? "Overig"
 
     var body: some View {
         NavigationStack {
@@ -24,17 +19,6 @@ struct MealsManagerSheet: View {
                     TextField("Naam", text: $mealName)
                     HStack {
                         TextField("Productnaam", text: $newItemName)
-                            .onChange(of: newItemName) { value in
-                                if let suggested = store.suggestedCategory(for: value) ?? guessedCategory(for: value) {
-                                    newItemCategory = canonicalCategory(suggested)
-                                }
-                            }
-                        Picker("Categorie", selection: $newItemCategory) {
-                            ForEach(categoryList, id: \.self) { cat in
-                                Text(cat).tag(cat)
-                            }
-                        }
-                        .labelsHidden()
                         Button { addItem() } label: {
                             Image(systemName: "plus.circle.fill")
                         }
@@ -57,7 +41,6 @@ struct MealsManagerSheet: View {
                         mealName = ""
                         items = []
                         newItemName = ""
-                        newItemCategory = categoryList.first ?? "Overig"
                     }
                     .disabled(mealName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || items.isEmpty)
                 }
@@ -78,7 +61,6 @@ struct MealsManagerSheet: View {
                                 editMealName = meal.name
                                 editItems = meal.items
                                 editNewItemName = ""
-                                editNewItemCategory = categoryList.first ?? "Overig"
                             }
                         }
                         .onDelete { offsets in
@@ -104,17 +86,6 @@ struct MealsManagerSheet: View {
                         Section("Items") {
                             HStack {
                                 TextField("Productnaam", text: $editNewItemName)
-                                    .onChange(of: editNewItemName) { value in
-                                        if let suggested = store.suggestedCategory(for: value) ?? guessedCategory(for: value) {
-                                            editNewItemCategory = canonicalCategory(suggested)
-                                        }
-                                    }
-                                Picker("Categorie", selection: $editNewItemCategory) {
-                                    ForEach(categoryList, id: \.self) { cat in
-                                        Text(cat).tag(cat)
-                                    }
-                                }
-                                .labelsHidden()
                                 Button { addEditItem() } label: {
                                     Image(systemName: "plus.circle.fill")
                                 }
@@ -128,12 +99,6 @@ struct MealsManagerSheet: View {
                                         Text(item.name)
                                         Spacer()
                                         Text(item.category).foregroundStyle(Theme.textSecondary)
-                                    }
-                                    .contentShape(Rectangle())
-                                    .onTapGesture {
-                                        editingItem = item
-                                        editItemName = item.name
-                                        editItemCategory = canonicalCategory(item.category)
                                     }
                                 }
                                 .onDelete { offsets in editItems.remove(atOffsets: offsets) }
@@ -160,20 +125,27 @@ struct MealsManagerSheet: View {
 
     private func addItem() {
         let name = newItemName.trimmingCharacters(in: .whitespacesAndNewlines)
-        let category = newItemCategory.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return }
-        items.append(MealItem(name: name, category: canonicalCategory(category.isEmpty ? "Onbekend" : category)))
+        items.append(MealItem(name: name, category: resolvedCategory(for: name)))
         newItemName = ""
-        newItemCategory = categoryList.first ?? "Overig"
     }
 
     private func addEditItem() {
         let name = editNewItemName.trimmingCharacters(in: .whitespacesAndNewlines)
-        let category = editNewItemCategory.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return }
-        editItems.append(MealItem(name: name, category: canonicalCategory(category.isEmpty ? "Onbekend" : category)))
+        editItems.append(MealItem(name: name, category: resolvedCategory(for: name)))
         editNewItemName = ""
-        editNewItemCategory = categoryList.first ?? "Overig"
+    }
+
+    private func resolvedCategory(for name: String) -> String {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty { return "Onbekend" }
+        if let stored = store.suggestedCategory(for: trimmed) {
+            return canonicalCategory(stored)
+        }
+        if let guess = guessedCategory(for: trimmed) {
+            return canonicalCategory(guess)
+        }
+        return "Onbekend"
     }
 }
-
