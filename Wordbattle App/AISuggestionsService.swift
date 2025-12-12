@@ -17,6 +17,17 @@ struct RecipeSuggestion: Identifiable, Codable, Equatable {
 enum AISuggestionsService {
     static let endpoint: String = "https://bijkersparks.nl/api/suggest.php"
     static let apiKey: String = ""
+    private static let blockedKeywords: [String] = [
+        "m&m",
+        "m&m's",
+        "snackmix",
+        "candy",
+        "snoep",
+        "chocolade",
+        "gummy",
+        "lol", // defensief: vang gekke of grappenmakerij af
+        "prank"
+    ]
 
     struct RequestBody: Codable {
         let ingredients: [String]
@@ -55,16 +66,36 @@ enum AISuggestionsService {
             throw URLError(.badServerResponse)
         }
         if let decoded = try? JSONDecoder().decode(ResponseBody.self, from: data) {
-            return decoded.suggestions.map { raw in
-                RecipeSuggestion(
-                    id: UUID(uuidString: raw.id) ?? UUID(),
-                    title: raw.title,
-                    steps: raw.steps,
-                    missingIngredients: raw.missingIngredients
-                )
-            }
+            let filtered = decoded.suggestions
+                .filter { isAcceptable($0, ingredients: ingredients) }
+                .map { raw in
+                    RecipeSuggestion(
+                        id: UUID(uuidString: raw.id) ?? UUID(),
+                        title: raw.title,
+                        steps: raw.steps,
+                        missingIngredients: raw.missingIngredients
+                    )
+                }
+            return filtered
         }
         return mockSuggestions(ingredients: ingredients, dayTitle: dayTitle)
+    }
+
+    private static func isAcceptable(_ suggestion: RawSuggestion, ingredients: [String]) -> Bool {
+        let haystack = (suggestion.title + " " + suggestion.steps.joined(separator: " ")).lowercased()
+        if blockedKeywords.contains(where: { haystack.contains($0) }) {
+            return false
+        }
+
+        let cleanedIngredients = ingredients.map { $0.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) }
+        guard !cleanedIngredients.isEmpty else { return true }
+        let allowedMissing = max(1, cleanedIngredients.count / 2)
+        if suggestion.missingIngredients.count > allowedMissing {
+            return false
+        }
+        let usedCount = cleanedIngredients.filter { haystack.contains($0) }.count
+        let ingredientCoverage = Double(usedCount) / Double(cleanedIngredients.count)
+        return ingredientCoverage >= 0.4 // eist dat minstens ~40% van de gekozen producten terugkomen
     }
 
     private static func mockSuggestions(ingredients: [String], dayTitle: String) -> [RecipeSuggestion] {
