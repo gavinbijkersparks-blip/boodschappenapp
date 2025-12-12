@@ -500,11 +500,6 @@ private struct AddProductSheet: View {
             Form {
                 Section(header: Text("Product")) {
                     TextField("Naam", text: $name)
-                    Picker("Categorie", selection: $category) {
-                        ForEach(categoryList, id: \.self) { cat in
-                            Text(cat).tag(cat)
-                        }
-                    }
                     HStack {
                         Text("Aantal")
                         Spacer()
