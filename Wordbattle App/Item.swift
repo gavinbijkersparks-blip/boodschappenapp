@@ -335,18 +335,56 @@ final class ProductStore: ObservableObject {
     }
 
     // MARK: AI Suggestions
-    func recipeSuggestions(for day: DayOfWeek, in listID: UUID) async -> [RecipeSuggestion] {
+    func recipeSuggestions(for day: DayOfWeek?, in listID: UUID) async -> [RecipeSuggestion] {
         guard let li = lists.firstIndex(where: { $0.id == listID }) else { return [] }
-        let ingredients = lists[li].products
-            .filter { $0.day == day && $0.isPlanned && $0.isActive }
-            .map { $0.name }
+        let relevant = lists[li].products.filter { product in
+            guard product.isActive else { return false }
+            if let day { return product.isPlanned && product.day == day }
+            return !product.isPlanned
+        }
+        let ingredients = relevant.map { $0.name }
         guard !ingredients.isEmpty else { return [] }
         do {
-            return try await AISuggestionsService.fetchSuggestions(ingredients: ingredients, dayTitle: day.title)
+            let suggestions = try await AISuggestionsService.fetchSuggestions(ingredients: ingredients, dayTitle: day?.title ?? "Alle producten")
+            return Array(suggestions.prefix(5))
         } catch {
             print("AI suggesties mislukt: \(error)")
             return []
         }
+    }
+
+    @discardableResult
+    func addMissingIngredients(_ names: [String], to listID: UUID, plannedFor day: DayOfWeek?) -> [Product] {
+        guard let li = lists.firstIndex(where: { $0.id == listID }) else { return [] }
+        var existing = Set(lists[li].products.map { $0.name.lowercased() })
+        var added: [Product] = []
+
+        for raw in names {
+            let name = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !name.isEmpty else { continue }
+            guard !existing.contains(name.lowercased()) else { continue }
+            let cat = suggestedCategory(for: name) ?? guessedCategory(for: name) ?? "Overig"
+            let normalized = canonicalCategory(cat)
+            let product = Product(
+                name: name,
+                category: normalized,
+                estimatedPrice: guessPrice(for: name, category: normalized),
+                isFavorite: false,
+                isActive: true,
+                isPlanned: day != nil,
+                isDone: false,
+                day: day
+            )
+            lists[li].products.insert(product, at: 0)
+            rememberCategory(for: name, category: normalized)
+            added.append(product)
+            existing.insert(name.lowercased())
+        }
+
+        if !added.isEmpty {
+            save()
+        }
+        return added
     }
 
     // MARK: Category memory

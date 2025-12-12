@@ -152,4 +152,12 @@ struct MealsManagerSheet: View {
         editNewItemName = ""
         editingMeal = meal
     }
+
+    private func prepareEditState(for meal: MealTemplate) {
+        editMealName = meal.name
+        editItems = meal.items
+        editNewItemName = ""
+        editNewItemCategory = categoryList.first ?? "Overig"
+        editingMeal = meal
+    }
 }

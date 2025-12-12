@@ -255,13 +255,12 @@ private struct ListDetailView: View {
             }
             .sheet(item: $suggestionSheetDay) { day in
                 NavigationStack {
-                    SuggestionSheetView(store: store, listID: listID, day: day)
+                    SuggestionSheetView(store: store, listID: listID, context: .day(day))
                 }
             }
             .sheet(isPresented: $showUnplannedSuggestions) {
-                let ingredients = unplannedProducts.map { $0.name }
                 NavigationStack {
-                    GenericSuggestionSheet(title: "Alle producten", ingredients: ingredients)
+                    SuggestionSheetView(store: store, listID: listID, context: .unplanned)
                 }
             }
         }

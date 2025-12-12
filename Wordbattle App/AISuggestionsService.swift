@@ -162,7 +162,8 @@ enum AISuggestionsService {
                     "Gebruik: \(joined).",
                     "Bak/roer alles in één pan, kruid naar smaak.",
                     "Serveer met brood of rijst."
-                ]
+                ],
+                missingIngredients: ["brood", "rijst"]
             ),
             RecipeSuggestion(
                 title: "Komfort bowl",
@@ -170,7 +171,35 @@ enum AISuggestionsService {
                     "Combineer \(joined) in een grote kom.",
                     "Voeg olie, zout en peper toe.",
                     "Rooster of wok en serveer warm."
-                ]
+                ],
+                missingIngredients: ["sojasaus"]
+            ),
+            RecipeSuggestion(
+                title: "Ovenschotel \(dayTitle.lowercased())",
+                steps: [
+                    "Snij en meng \(joined) met room of tomatensaus.",
+                    "Dek af met kaas en bak 20-25 minuten.",
+                    "Serveer met salade."
+                ],
+                missingIngredients: ["room", "geraspte kaas"]
+            ),
+            RecipeSuggestion(
+                title: "Wrap night",
+                steps: [
+                    "Verwarm wraps en vul met \(joined).",
+                    "Voeg salsa of yoghurt toe voor frisheid.",
+                    "Oprollen en meteen serveren."
+                ],
+                missingIngredients: ["wraps", "salsa"]
+            ),
+            RecipeSuggestion(
+                title: "Snelle soep",
+                steps: [
+                    "Fruit \(joined) kort in olie.",
+                    "Blus af met bouillon en laat 12 minuten koken.",
+                    "Pureer of serveer grof."
+                ],
+                missingIngredients: ["bouillon"]
             )
         ]
     }
