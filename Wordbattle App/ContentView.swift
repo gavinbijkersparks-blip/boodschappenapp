@@ -346,8 +346,8 @@ private struct ListDetailView: View {
                     .shadow(color: Theme.shadow, radius: 12, x: 0, y: 6)
             )
             .padding(.horizontal)
-            .dropDestination(for: UUID.self) { items, _ in
-                guard let id = items.first else { return false }
+            .dropDestination(for: DraggableUUID.self) { items, _ in
+                guard let id = items.first?.id else { return false }
                 return unplanProduct(id: id)
             } isTargeted: { hovering in
                 highlightedTop = hovering
@@ -373,8 +373,8 @@ private struct ListDetailView: View {
                         onShowSuggestions: { suggestionSheetDay = day },
                         hideDone: hideDone
                     )
-                    .dropDestination(for: UUID.self) { items, _ in
-                        guard let id = items.first else { return false }
+                    .dropDestination(for: DraggableUUID.self) { items, _ in
+                        guard let id = items.first?.id else { return false }
                         store.assign(productID: id, to: day, in: listID)
                         highlightedDay = nil
                         return true
@@ -545,7 +545,7 @@ private struct AddProductSheet: View {
                     .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSaving)
                 }
             }
-            .onChange(of: name) { newValue in
+            .onChange(of: name) { _, newValue in
                 if let suggested = store.suggestedCategory(for: newValue) ?? guessedCategory(for: newValue) {
                     category = suggested
                 }
@@ -1052,7 +1052,7 @@ private struct DraggableRow: View {
         .clipShape(RoundedRectangle(cornerRadius: 20))
         .offset(x: swipeOffset)
         .gesture(drag)
-        .draggable(product.id)
+        .draggable(DraggableUUID(id: product.id))
         .onTapGesture(count: 2) {
             onToggleDone(product)
         }

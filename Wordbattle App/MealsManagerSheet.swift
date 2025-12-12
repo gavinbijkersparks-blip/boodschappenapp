@@ -24,7 +24,7 @@ struct MealsManagerSheet: View {
                     TextField("Naam", text: $mealName)
                     HStack {
                         TextField("Productnaam", text: $newItemName)
-                            .onChange(of: newItemName) { value in
+                            .onChange(of: newItemName) { _, value in
                                 if let suggested = store.suggestedCategory(for: value) ?? guessedCategory(for: value) {
                                     newItemCategory = canonicalCategory(suggested)
                                 }
@@ -100,7 +100,7 @@ struct MealsManagerSheet: View {
                         Section("Items") {
                             HStack {
                                 TextField("Productnaam", text: $editNewItemName)
-                                    .onChange(of: editNewItemName) { value in
+                                    .onChange(of: editNewItemName) { _, value in
                                         if let suggested = store.suggestedCategory(for: value) ?? guessedCategory(for: value) {
                                             editNewItemCategory = canonicalCategory(suggested)
                                         }
@@ -180,4 +180,3 @@ struct MealsManagerSheet: View {
         editingMeal = meal
     }
 }
-
