@@ -74,11 +74,7 @@ struct MealsManagerSheet: View {
                             }
                             .contentShape(Rectangle())
                             .onTapGesture {
-                                editingMeal = meal
-                                editMealName = meal.name
-                                editItems = meal.items
-                                editNewItemName = ""
-                                editNewItemCategory = categoryList.first ?? "Overig"
+                                prepareEditState(for: meal)
                             }
                         }
                         .onDelete { offsets in
@@ -174,6 +170,14 @@ struct MealsManagerSheet: View {
         editItems.append(MealItem(name: name, category: canonicalCategory(category.isEmpty ? "Onbekend" : category)))
         editNewItemName = ""
         editNewItemCategory = categoryList.first ?? "Overig"
+    }
+
+    private func prepareEditState(for meal: MealTemplate) {
+        editMealName = meal.name
+        editItems = meal.items
+        editNewItemName = ""
+        editNewItemCategory = categoryList.first ?? "Overig"
+        editingMeal = meal
     }
 }
 
