@@ -420,18 +420,21 @@ final class ProductStore: ObservableObject {
     }
 }
 
-// UUID drag/drop transferable
-private enum UUIDTransferError: Error { case invalidData }
-extension UUID: Transferable {
-    public static var transferRepresentation: some TransferRepresentation {
-        DataRepresentation(contentType: .utf8PlainText) { uuid in
-            uuid.uuidString.data(using: .utf8) ?? Data()
+// UUID drag/drop transferable wrapper to avoid extending Foundation.UUID
+struct DraggableUUID: Transferable {
+    let id: UUID
+
+    private enum UUIDTransferError: Error { case invalidData }
+
+    static var transferRepresentation: some TransferRepresentation {
+        DataRepresentation(contentType: .utf8PlainText) { wrapper in
+            wrapper.id.uuidString.data(using: .utf8) ?? Data()
         } importing: { data in
             guard let string = String(data: data, encoding: .utf8),
                   let uuid = UUID(uuidString: string) else {
                 throw UUIDTransferError.invalidData
             }
-            return uuid
+            return DraggableUUID(id: uuid)
         }
     }
 }
