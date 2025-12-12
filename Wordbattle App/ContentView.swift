@@ -109,6 +109,7 @@ private struct ListDetailView: View {
     @State private var hideDone: Bool = false
     @State private var suggestionSheetDay: DayOfWeek?
     @State private var showUnplannedSuggestions: Bool = false
+    @State private var sortMode: ProductSort = .recent
 
     var body: some View {
         NavigationStack {
@@ -120,6 +121,7 @@ private struct ListDetailView: View {
                 .animation(.default, value: store.lists)
             }
             .navigationTitle(listName)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
@@ -128,8 +130,8 @@ private struct ListDetailView: View {
                         Image(systemName: "plus.circle.fill")
                     }
                 }
-                ToolbarItem(placement: .navigationBarLeading) {
-                    HStack(spacing: 10) {
+                ToolbarItem(placement: .principal) {
+                    HStack(spacing: 12) {
                         Button {
                             showFavorites = true
                         } label: {
@@ -155,7 +157,8 @@ private struct ListDetailView: View {
                         Text(listName)
                             .font(.system(size: 18, weight: .semibold))
                             .foregroundStyle(Theme.textPrimary)
-                            .padding(.leading, 8)
+                            .lineLimit(1)
+                            .padding(.leading, 4)
                     }
                 }
                 ToolbarItemGroup(placement: .bottomBar) {
@@ -274,6 +277,24 @@ private struct ListDetailView: View {
             .filter { !$0.isPlanned && $0.isActive && (!hideDone || !$0.isDone) } ?? []
     }
 
+    private var sortedUnplannedProducts: [Product] {
+        switch sortMode {
+        case .recent:
+            return unplannedProducts.sorted { $0.createdAt > $1.createdAt }
+        case .name:
+            return unplannedProducts.sorted { lhs, rhs in
+                lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
+            }
+        case .category:
+            return unplannedProducts.sorted { lhs, rhs in
+                if lhs.category == rhs.category {
+                    return lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
+                }
+                return lhs.category.localizedCaseInsensitiveCompare(rhs.category) == .orderedAscending
+            }
+        }
+    }
+
     private var totalEstimate: Double? {
         guard let list = store.list(by: listID) else { return nil }
         let prices = list.products.compactMap { prod -> Double? in
@@ -300,7 +321,6 @@ private struct ListDetailView: View {
             Text("Alle producten")
                 .font(.system(size: 28, weight: .bold))
                 .foregroundStyle(Theme.textPrimary)
-                .padding(.horizontal)
                 .overlay(alignment: .trailing) {
                     Button {
                         showUnplannedSuggestions = true
@@ -315,13 +335,22 @@ private struct ListDetailView: View {
                     }
                     .padding(.trailing, 16)
                 }
+            .padding(.horizontal)
 
             Toggle("Verberg afgevinkt", isOn: $hideDone)
                 .padding(.horizontal)
                 .toggleStyle(SwitchToggleStyle(tint: Theme.accent))
 
             VStack(spacing: 10) {
-                ForEach(unplannedProducts) { product in
+                Picker("Sorteer", selection: $sortMode) {
+                    ForEach(ProductSort.allCases) { option in
+                        Text(option.title).tag(option)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal)
+
+                ForEach(sortedUnplannedProducts) { product in
                     DraggableRow(
                         product: product,
                         showDay: product.day != nil,
@@ -456,7 +485,6 @@ private struct AddProductSheet: View {
     @State private var isFavorite: Bool = false
     @State private var day: DayOfWeek? = nil
     @State private var quantity: Int = 1
-    @State private var useAICategory = true
     @State private var isSaving = false
 
     var onSave: (String, String, Bool, DayOfWeek?, Int, Double?) -> Void
@@ -466,11 +494,6 @@ private struct AddProductSheet: View {
             Form {
                 Section(header: Text("Product")) {
                     TextField("Naam", text: $name)
-                    Picker("Categorie", selection: $category) {
-                        ForEach(categoryList, id: \.self) { cat in
-                            Text(cat).tag(cat)
-                        }
-                    }
                     HStack {
                         Text("Aantal")
                         Spacer()
@@ -507,7 +530,6 @@ private struct AddProductSheet: View {
                             Text(day.title).tag(DayOfWeek?.some(day))
                         }
                     }
-                    Toggle("Gebruik AI categorie bij opslaan", isOn: $useAICategory)
                 }
             }
             .navigationTitle("Nieuw product")
@@ -522,7 +544,7 @@ private struct AddProductSheet: View {
                             let heuristic = guessedCategory(for: name)
                             var finalCategory = category
                             var resolvedPrice: Double? = nil
-                            if useAICategory, let ai = await AICategoryService.suggestCategory(for: name) {
+                            if let ai = await AICategoryService.suggestCategory(for: name) {
                                 finalCategory = ai
                             }
                             if let heuristic {
@@ -1067,6 +1089,22 @@ private struct DraggableRow: View {
             return Color.red.opacity(intensity)
         }
         return Color.white.opacity(0.9)
+    }
+}
+
+private enum ProductSort: String, CaseIterable, Identifiable {
+    case recent
+    case name
+    case category
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .recent: return "Nieuwste"
+        case .name: return "Naam"
+        case .category: return "Categorie"
+        }
     }
 }
 
