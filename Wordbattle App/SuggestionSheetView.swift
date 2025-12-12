@@ -120,6 +120,26 @@ struct SuggestionSheetView: View {
                                     .tint(Theme.accent)
                                 }
                                 .disabled(suggestion.missingIngredients.isEmpty)
+
+                                Button {
+                                    saveAsMeal(suggestion)
+                                } label: {
+                                    HStack {
+                                        Image(systemName: "fork.knife.circle")
+                                        Text("Bewaar als maaltijd")
+                                            .fontWeight(.semibold)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(Theme.cardBackground)
+                                    .foregroundStyle(Theme.textPrimary)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .stroke(Theme.accent, lineWidth: 1)
+                                    )
+                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                                }
+                                .buttonStyle(.plain)
                             }
                             .padding()
                             .background(Theme.cardBackground)
@@ -170,6 +190,11 @@ struct SuggestionSheetView: View {
         } else {
             message = "Toegevoegd: \(added.map { $0.name }.joined(separator: ", "))."
         }
+    }
+
+    private func saveAsMeal(_ suggestion: RecipeSuggestion) {
+        let meal = store.saveSuggestionAsMeal(suggestion, baseProducts: baseIngredients)
+        message = "Opgeslagen als maaltijd: \(meal.name)"
     }
 }
 

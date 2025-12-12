@@ -110,6 +110,7 @@ private struct ListDetailView: View {
     @State private var suggestionSheetDay: DayOfWeek?
     @State private var showUnplannedSuggestions: Bool = false
     @State private var sortMode: ProductSort = .recent
+    @State private var editingProduct: Product?
 
     var body: some View {
         NavigationStack {
@@ -126,7 +127,13 @@ private struct ListDetailView: View {
                     Button {
                         showAddProductSheet = true
                     } label: {
-                        Image(systemName: "plus.circle.fill")
+                        Image(systemName: "plus")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(width: 36, height: 36)
+                            .background(Theme.accent)
+                            .clipShape(Circle())
+                            .shadow(color: Theme.shadow, radius: 6, x: 0, y: 3)
                     }
                 }
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -256,6 +263,20 @@ private struct ListDetailView: View {
                     SuggestionSheetView(store: store, listID: listID, context: .day(day))
                 }
             }
+            .sheet(item: $editingProduct) { product in
+                NavigationStack {
+                    ProductEditSheet(
+                        product: product,
+                        onSave: { updatedName, updatedQty in
+                            store.rename(product, to: updatedName, in: listID)
+                            let delta = updatedQty - product.quantity
+                            if delta != 0 {
+                                store.changeQuantity(product, delta: delta, in: listID)
+                            }
+                        }
+                    )
+                }
+            }
             .sheet(isPresented: $showUnplannedSuggestions) {
                 NavigationStack {
                     SuggestionSheetView(store: store, listID: listID, context: .unplanned)
@@ -315,24 +336,25 @@ private struct ListDetailView: View {
     @ViewBuilder
     private var listContent: some View {
         VStack(alignment: .leading, spacing: 20) {
-            Text("Alle producten")
-                .font(.system(size: 28, weight: .bold))
-                .foregroundStyle(Theme.textPrimary)
-                .padding(.horizontal)
-                .overlay(alignment: .trailing) {
-                    Button {
-                        showUnplannedSuggestions = true
-                    } label: {
-                        Image(systemName: "sparkles")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(width: 36, height: 36)
-                            .background(Theme.accent)
-                            .clipShape(Circle())
-                            .shadow(color: Theme.shadow, radius: 6, x: 0, y: 3)
-                    }
-                    .padding(.trailing, 16)
+            HStack(alignment: .center, spacing: 12) {
+                Text("Alle producten")
+                    .font(.system(size: 28, weight: .bold))
+                    .foregroundStyle(Theme.textPrimary)
+                Spacer()
+                Button {
+                    showUnplannedSuggestions = true
+                } label: {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(width: 36, height: 36)
+                        .background(Theme.accent)
+                        .clipShape(Circle())
+                        .shadow(color: Theme.shadow, radius: 6, x: 0, y: 3)
                 }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal)
 
             Toggle("Verberg afgevinkt", isOn: $hideDone)
                 .padding(.horizontal)
@@ -348,6 +370,7 @@ private struct ListDetailView: View {
                         markFavoriteAction: { store.markFavorite($0, in: listID) },
                         onToggleDone: { store.toggleDone($0, in: listID) },
                         onChangeQuantity: { prod, delta in store.changeQuantity(prod, delta: delta, in: listID) },
+                        onEdit: { editingProduct = $0 },
                         aiHint: productAIHint(product)
                     )
                 }
@@ -388,6 +411,7 @@ private struct ListDetailView: View {
                         onMarkFavorite: { store.markFavorite($0, in: listID) },
                         onToggleDone: { store.toggleDone($0, in: listID) },
                         onChangeQuantity: { prod, delta in store.changeQuantity(prod, delta: delta, in: listID) },
+                        onEdit: { editingProduct = $0 },
                         aiHintProvider: { productAIHint($0) },
                         onShowSuggestions: { suggestionSheetDay = day },
                         hideDone: hideDone
@@ -484,11 +508,6 @@ private struct AddProductSheet: View {
             Form {
                 Section(header: Text("Product")) {
                     TextField("Naam", text: $name)
-                    Picker("Categorie", selection: $category) {
-                        ForEach(categoryList, id: \.self) { cat in
-                            Text(cat).tag(cat)
-                        }
-                    }
                     HStack {
                         Text("Aantal")
                         Spacer()
@@ -906,6 +925,7 @@ private struct DayDropCard: View {
     let onMarkFavorite: (Product) -> Void
     let onToggleDone: (Product) -> Void
     let onChangeQuantity: (Product, Int) -> Void
+    let onEdit: (Product) -> Void
     let aiHintProvider: (Product) -> String?
     let onShowSuggestions: () -> Void
     let hideDone: Bool
@@ -965,6 +985,7 @@ private struct DayDropCard: View {
                                 markFavoriteAction: onMarkFavorite,
                                 onToggleDone: onToggleDone,
                                 onChangeQuantity: { deltaProd, delta in onChangeQuantity(deltaProd, delta) },
+                                onEdit: onEdit,
                                 aiHint: aiHintProvider(product)
                             )
                         }
@@ -991,6 +1012,7 @@ private struct DraggableRow: View {
     let markFavoriteAction: (Product) -> Void
     let onToggleDone: (Product) -> Void
     let onChangeQuantity: (Product, Int) -> Void
+    let onEdit: (Product) -> Void
     let aiHint: String?
 
     @State private var swipeOffset: CGFloat = 0
@@ -1004,7 +1026,7 @@ private struct DraggableRow: View {
             .onEnded { value in
                 let translation = value.translation.width
                 if translation > swipeThreshold {
-                    markFavoriteAction(product)
+                    onEdit(product)
                 } else if translation < -swipeThreshold {
                     removeAction(product)
                 }
@@ -1039,8 +1061,17 @@ private struct DraggableRow: View {
                 }
             }
             Spacer()
-            Text("x\(product.quantity)")
-                .font(.system(size: 16, weight: .semibold))
+           HStack(spacing: 6) {
+               Text("x\(product.quantity)")
+                   .font(.system(size: 16, weight: .semibold))
+                    .contextMenu {
+                        Button {
+                            onEdit(product)
+                        } label: {
+                            Label("Bewerk…", systemImage: "pencil")
+                        }
+                    }
+            }
             if showDay, let day = product.day {
                 Text(day.title.prefix(2))
                     .font(.caption)
@@ -1055,6 +1086,9 @@ private struct DraggableRow: View {
                 .background(product.isFavorite ? Theme.accent : Color.white)
                 .clipShape(Circle())
                 .shadow(color: Theme.shadow, radius: 4, x: 0, y: 2)
+                .onTapGesture {
+                    favoriteAction(product)
+                }
             Image(systemName: product.isDone ? "checkmark.circle.fill" : "checkmark.circle")
                 .foregroundColor(product.isDone ? .white : Color.gray)
                 .font(.system(size: 18, weight: .semibold))

@@ -295,6 +295,15 @@ final class ProductStore: ObservableObject {
         save()
     }
 
+    func rename(_ product: Product, to newName: String, in listID: UUID) {
+        let trimmed = newName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        guard let li = lists.firstIndex(where: { $0.id == listID }),
+              let pi = lists[li].products.firstIndex(of: product) else { return }
+        lists[li].products[pi].name = trimmed
+        save()
+    }
+
     // MARK: Barcode
     func infoForBarcode(_ code: String) async -> BarcodeInfo? {
         if let cached = barcodeInfoCache[code], cached.category != "Barcode" {
@@ -373,6 +382,38 @@ final class ProductStore: ObservableObject {
             print("AI suggesties mislukt: \(error)")
             return AISuggestionsService.fallbackSuggestions(ingredients: ingredients, dayTitle: day?.title ?? "Alle producten")
         }
+    }
+
+    @discardableResult
+    func saveSuggestionAsMeal(_ suggestion: RecipeSuggestion, baseProducts: [Product]) -> MealTemplate {
+        var seen: Set<String> = []
+        var items: [MealItem] = []
+
+        // Voeg bestaande (relevante) producten toe
+        for product in baseProducts where isRecipeRelevant(product) {
+            let key = product.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            guard !key.isEmpty, !seen.contains(key) else { continue }
+            seen.insert(key)
+            items.append(MealItem(name: product.name, category: canonicalCategory(product.category)))
+        }
+
+        // Voeg ontbrekende ingrediënten toe
+        for name in suggestion.missingIngredients {
+            let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else { continue }
+            let key = trimmed.lowercased()
+            guard !seen.contains(key) else { continue }
+            seen.insert(key)
+            let cat = suggestedCategory(for: trimmed) ?? guessedCategory(for: trimmed) ?? "Overig"
+            items.append(MealItem(name: trimmed, category: canonicalCategory(cat)))
+        }
+
+        let title = suggestion.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let name = title.isEmpty ? "Recept" : title
+        let meal = MealTemplate(name: name, items: items)
+        meals.insert(meal, at: 0)
+        save()
+        return meal
     }
 
     @discardableResult
