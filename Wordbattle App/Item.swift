@@ -106,6 +106,20 @@ struct StoreData: Codable {
     var categoryMemory: [String: String]?
 }
 
+let ignoredRecipeCategories: Set<String> = [
+    "Frisdrank", "Sappen", "Water", "Alcohol",
+    "Ontbijtgranen", "Ontbijtproducten", "Koek en gebak", "Koekjes", "Chips en zoutjes", "Snacks", "Snoep", "Chocolade",
+    "Koffie en thee",
+    "Schoonmaak", "Afwas", "Wasmiddel", "Papierwaren",
+    "Feestartikelen", "Kantoorartikelen", "Keukenartikelen",
+    "Babyvoeding", "Luiers", "Billendoekjes", "Hondenvoeding", "Kattenvoeding", "Dierverzorging"
+]
+
+func isRecipeRelevant(_ product: Product) -> Bool {
+    let cat = canonicalCategory(product.category)
+    return !ignoredRecipeCategories.contains(cat)
+}
+
 @MainActor
 final class ProductStore: ObservableObject {
     @Published private(set) var lists: [ShoppingList] = []
@@ -339,17 +353,25 @@ final class ProductStore: ObservableObject {
         guard let li = lists.firstIndex(where: { $0.id == listID }) else { return [] }
         let relevant = lists[li].products.filter { product in
             guard product.isActive else { return false }
+            guard isRecipeRelevant(product) else { return false }
             if let day { return product.isPlanned && product.day == day }
             return !product.isPlanned
         }
         let ingredients = relevant.map { $0.name }
         guard !ingredients.isEmpty else { return [] }
         do {
-            let suggestions = try await AISuggestionsService.fetchSuggestions(ingredients: ingredients, dayTitle: day?.title ?? "Alle producten")
+            var suggestions = try await AISuggestionsService.fetchSuggestions(ingredients: ingredients, dayTitle: day?.title ?? "Alle producten")
+            if suggestions.count < 5 {
+                let padded = AISuggestionsService.fallbackSuggestions(ingredients: ingredients, dayTitle: day?.title ?? "Alle producten")
+                for candidate in padded where !suggestions.contains(where: { $0.title == candidate.title }) {
+                    suggestions.append(candidate)
+                    if suggestions.count == 5 { break }
+                }
+            }
             return Array(suggestions.prefix(5))
         } catch {
             print("AI suggesties mislukt: \(error)")
-            return []
+            return AISuggestionsService.fallbackSuggestions(ingredients: ingredients, dayTitle: day?.title ?? "Alle producten")
         }
     }
 

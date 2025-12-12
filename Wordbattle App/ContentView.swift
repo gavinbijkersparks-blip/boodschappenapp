@@ -109,6 +109,7 @@ private struct ListDetailView: View {
     @State private var hideDone: Bool = false
     @State private var suggestionSheetDay: DayOfWeek?
     @State private var showUnplannedSuggestions: Bool = false
+    @State private var sortMode: ProductSort = .recent
 
     var body: some View {
         NavigationStack {
@@ -273,6 +274,24 @@ private struct ListDetailView: View {
             .filter { !$0.isPlanned && $0.isActive && (!hideDone || !$0.isDone) } ?? []
     }
 
+    private var sortedUnplannedProducts: [Product] {
+        switch sortMode {
+        case .recent:
+            return unplannedProducts.sorted { $0.createdAt > $1.createdAt }
+        case .name:
+            return unplannedProducts.sorted { lhs, rhs in
+                lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
+            }
+        case .category:
+            return unplannedProducts.sorted { lhs, rhs in
+                if lhs.category == rhs.category {
+                    return lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
+                }
+                return lhs.category.localizedCaseInsensitiveCompare(rhs.category) == .orderedAscending
+            }
+        }
+    }
+
     private var totalEstimate: Double? {
         guard let list = store.list(by: listID) else { return nil }
         let prices = list.products.compactMap { prod -> Double? in
@@ -320,7 +339,7 @@ private struct ListDetailView: View {
                 .toggleStyle(SwitchToggleStyle(tint: Theme.accent))
 
             VStack(spacing: 10) {
-                ForEach(unplannedProducts) { product in
+                ForEach(sortedUnplannedProducts) { product in
                     DraggableRow(
                         product: product,
                         showDay: product.day != nil,
@@ -1066,6 +1085,22 @@ private struct DraggableRow: View {
             return Color.red.opacity(intensity)
         }
         return Color.white.opacity(0.9)
+    }
+}
+
+private enum ProductSort: String, CaseIterable, Identifiable {
+    case recent
+    case name
+    case category
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .recent: return "Nieuwste"
+        case .name: return "Naam"
+        case .category: return "Categorie"
+        }
     }
 }
 

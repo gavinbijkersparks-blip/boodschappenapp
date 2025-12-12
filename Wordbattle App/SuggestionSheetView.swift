@@ -79,12 +79,10 @@ struct SuggestionSheetView: View {
                                     .font(.system(size: 18, weight: .semibold))
                                     .foregroundStyle(Theme.textPrimary)
 
-                                if !suggestion.missingIngredients.isEmpty {
-                                    IngredientChips(
-                                        title: "Ontbreekt",
-                                        ingredients: suggestion.missingIngredients
-                                    )
-                                }
+                                IngredientChips(
+                                    title: suggestion.missingIngredients.isEmpty ? "Geen ontbrekende ingrediënten" : "Ontbreekt",
+                                    ingredients: suggestion.missingIngredients.isEmpty ? ["Alles staat al op je lijst"] : suggestion.missingIngredients
+                                )
 
                                 VStack(alignment: .leading, spacing: 6) {
                                     Text("Stappen").font(.subheadline.bold())
@@ -98,23 +96,30 @@ struct SuggestionSheetView: View {
                                     }
                                 }
 
-                                if !suggestion.missingIngredients.isEmpty {
+                                Button {
+                                    addMissing(for: suggestion)
+                                } label: {
+                                    HStack {
+                                        Image(systemName: "cart.badge.plus")
+                                        Text(suggestion.missingIngredients.isEmpty ? "Niks ontbreekt" : "Zet ontbrekende producten \(context.ctaSuffix)")
+                                            .fontWeight(.semibold)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(suggestion.missingIngredients.isEmpty ? Theme.stroke : Theme.accentSecondary)
+                                    .foregroundStyle(Color.white)
+                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                                }
+                                .buttonStyle(.plain)
+                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                                     Button {
                                         addMissing(for: suggestion)
                                     } label: {
-                                        HStack {
-                                            Image(systemName: "cart.badge.plus")
-                                            Text("Zet ontbrekende producten \(context.ctaSuffix)")
-                                                .fontWeight(.semibold)
-                                        }
-                                        .frame(maxWidth: .infinity)
-                                        .padding()
-                                        .background(Theme.accentSecondary)
-                                        .foregroundStyle(Color.white)
-                                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                                        Label("Zet op lijst", systemImage: "cart.badge.plus")
                                     }
-                                    .buttonStyle(.plain)
+                                    .tint(Theme.accent)
                                 }
+                                .disabled(suggestion.missingIngredients.isEmpty)
                             }
                             .padding()
                             .background(Theme.cardBackground)
@@ -133,10 +138,13 @@ struct SuggestionSheetView: View {
     }
 
     private var baseIngredients: [Product] {
+        let products: [Product]
         if let day = context.day {
-            return store.planned(for: day, in: listID)
+            products = store.planned(for: day, in: listID)
+        } else {
+            products = store.unplanned(in: listID)
         }
-        return store.unplanned(in: listID)
+        return products.filter { isRecipeRelevant($0) }
     }
 
     private func fetch() {
