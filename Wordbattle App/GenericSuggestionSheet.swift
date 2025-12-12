@@ -35,7 +35,9 @@ struct GenericSuggestionSheet: View {
                 .disabled(loading || ingredients.isEmpty)
 
                 if let error {
-                    Text(error).foregroundColor(.red)
+                    Text(error)
+                        .foregroundStyle(Theme.textSecondary)
+                        .padding(.top, 4)
                 }
 
                 if !suggestions.isEmpty {
@@ -68,7 +70,7 @@ struct GenericSuggestionSheet: View {
                         }
                     }
                 } else if !loading {
-                    Text("Nog geen suggesties")
+                    Text(error ?? "Nog geen suggesties")
                         .foregroundStyle(Theme.textSecondary)
                 }
             }
@@ -112,7 +114,7 @@ struct GenericSuggestionSheet: View {
                 let result = try await AISuggestionsService.fetchSuggestions(ingredients: ingredients, dayTitle: title)
                 suggestions = result
                 if result.isEmpty {
-                    error = "Geen suggesties gevonden."
+                    error = "Met de gekozen producten zijn geen recepten beschikbaar."
                 }
             } catch {
                 self.error = "Fout bij ophalen: \(error.localizedDescription)"
