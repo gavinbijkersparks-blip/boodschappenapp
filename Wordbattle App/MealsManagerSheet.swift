@@ -57,14 +57,7 @@ struct MealsManagerSheet: View {
                             }
                             .contentShape(Rectangle())
                             .onTapGesture {
-<<<<<<< HEAD
-                                editingMeal = meal
-                                editMealName = meal.name
-                                editItems = meal.items
-                                editNewItemName = ""
-=======
                                 prepareEditState(for: meal)
->>>>>>> codex/improve-visibility-of-suggestion-button-mpsw6e
                             }
                         }
                         .onDelete { offsets in
@@ -154,10 +147,9 @@ struct MealsManagerSheet: View {
     }
 
     private func prepareEditState(for meal: MealTemplate) {
+        editingMeal = meal
         editMealName = meal.name
         editItems = meal.items
         editNewItemName = ""
-        editNewItemCategory = categoryList.first ?? "Overig"
-        editingMeal = meal
     }
 }
